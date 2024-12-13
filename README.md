@@ -9,5 +9,5 @@ World of Tanks Blitz dll injector, it is the injector for the mod loader :)
 
 # Building it yourself
 - because im lazy and didnt upload the sln, youll want to open visual studio, make a WPF app (.NET Framework) in c#, then open the folder location, and just put these in there, if you make any of your own changes, and want me to update it on the github for others, just make a request or something
--
+- you might wanna install costura (optional), and also you need System.Text.Json (for the config stuff)
 - i have no idea how to use github guys dont be mean ):
