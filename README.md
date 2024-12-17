@@ -1,7 +1,10 @@
 # BlitzInjector
 World of Tanks Blitz dll injector, it is the injector for the mod loader :)
 
-
+# How to Use
+- firstly, get the dll (its not released yet), then either click "browse me" to browse for the dll, or you can drag it into the window to load it,
+- (in development mod) put zipped mods into the mods folder (click the open mods folder first), pls do not extract them, the dll will do it for you
+- click inject, and itll try to open the process for you, if its already open, itll just inject into it, (if it fails to open the process for you, just open with steam or wgc)
 
 # Other
 - make sure to exclude it from your anti virus in windows settings, else windows will try to get rid of it (its a false positive like all injectors)
