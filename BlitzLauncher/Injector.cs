@@ -81,7 +81,7 @@ namespace BlitzLauncher {
             IntPtr remoteMemory = VirtualAllocEx(hProc, IntPtr.Zero, (uint)dllBytes.Length * 2 + 2, MEM_COMMIT | MEM_RESERVE,
                 PAGE_READWRITE);
             if (remoteMemory == IntPtr.Zero) {
-                MessageBox.Show("Could not allocate memory to target process :(", "Error", MessageBoxButton.OK,
+                MessageBox.Show($"Could not allocate memory to target process: {Marshal.GetLastWin32Error()}", "Error", MessageBoxButton.OK,
                     MessageBoxImage.Error);
                 return false;
             }
@@ -90,14 +90,14 @@ namespace BlitzLauncher {
 
             IntPtr loadLibraryAddr = GetProcAddress(GetModuleHandle("kernel32.dll"), "LoadLibraryW");
             if (loadLibraryAddr == IntPtr.Zero) {
-                MessageBox.Show("Could not get address of LoadLibraryW", "Error", MessageBoxButton.OK,
+                MessageBox.Show($"Could not get address of LoadLibraryW: {Marshal.GetLastWin32Error()}", "Error", MessageBoxButton.OK,
                     MessageBoxImage.Error);
                 return false;
             }
 
             IntPtr remoteThreadHandle = CreateRemoteThread(hProc, IntPtr.Zero, 0, loadLibraryAddr, remoteMemory, 0, out _);
             if (remoteThreadHandle == IntPtr.Zero) {
-                MessageBox.Show("Could not create remote thread in target process :(", "Error", MessageBoxButton.OK,
+                MessageBox.Show($"Could not create remote thread in target process: {Marshal.GetLastWin32Error()}", "Error", MessageBoxButton.OK,
                     MessageBoxImage.Error);
             } else {
                 SetThreadPriority(remoteThreadHandle, THREAD_PRIORITY_TIME_CRITICAL);

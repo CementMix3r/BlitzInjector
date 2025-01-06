@@ -43,6 +43,8 @@ namespace BlitzLauncher {
                     CustomPathSetting.IsSelected = true;
                     break;
             }
+
+            CustomPathTextBox.Text = _settings.CustomExePath;
         }
 
         private void LaunchMode_SelectChanged(object sender, SelectionChangedEventArgs e) {
@@ -53,15 +55,6 @@ namespace BlitzLauncher {
                 CustomPathTextBox.Visibility = Visibility.Hidden;
                 BrowseForPathButton.Visibility = Visibility.Hidden;
             }
-        }
-        
-        private string LoadSettings() {
-            if (!File.Exists(ConfigFile)) return null;
-            var json = File.ReadAllText(ConfigFile);
-            var settings = JsonSerializer.Deserialize<Settings>(json);
-            if (settings != null)
-                _settings = settings;
-            return settings?.LastDllPath;
         }
 
         private void SaveSettings_Click(object sender, RoutedEventArgs e) {
@@ -75,6 +68,7 @@ namespace BlitzLauncher {
                 _settings.LaunchMode = LaunchMode.ForceUWP;
             else if (CustomPathSetting.IsSelected)
                 _settings.LaunchMode = LaunchMode.CustomPath;
+            _settings.CustomExePath = CustomPathTextBox.Text;
         }
 
         private void BrowseForPath_Click(object sender, RoutedEventArgs e) {

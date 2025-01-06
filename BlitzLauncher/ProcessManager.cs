@@ -145,7 +145,7 @@ namespace BlitzLauncher {
             public void Dispose() {
                 if (ThreadHandle != IntPtr.Zero) {
                     if (!CloseHandle(ThreadHandle)) {
-                        MessageBox.Show("Failed to close thread handle :(", "Error",
+                        MessageBox.Show($"Failed to close thread handle: {Marshal.GetLastWin32Error()}", "Error",
                             MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                     ThreadHandle = IntPtr.Zero;
@@ -154,7 +154,7 @@ namespace BlitzLauncher {
                 foreach (IntPtr hThread in ThreadHandleList) {
                     if (hThread != IntPtr.Zero) {
                         if (!CloseHandle(hThread)) {
-                            MessageBox.Show("Failed to close thread handle :(", "Error",
+                            MessageBox.Show($"Failed to close thread handle: {Marshal.GetLastWin32Error()}", "Error",
                                 MessageBoxButton.OK, MessageBoxImage.Error);
                         }
                     }
@@ -162,7 +162,7 @@ namespace BlitzLauncher {
 
                 if (ProcessHandle != IntPtr.Zero) {
                     if (!CloseHandle(ProcessHandle)) {
-                        MessageBox.Show("Failed to close process handle :(", "Error",
+                        MessageBox.Show($"Failed to close process handle: {Marshal.GetLastWin32Error()}", "Error",
                             MessageBoxButton.OK, MessageBoxImage.Error);
                     }
 
