@@ -9,8 +9,6 @@ namespace BlitzLauncher {
         protected override void OnStartup(StartupEventArgs e) {
             base.OnStartup(e);
             DpiHelper.SetProcessDpiAwareness(DpiHelper.DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE);
-            CultureInfo.DefaultThreadCurrentCulture = new CultureInfo("en-US");
-            CultureInfo.DefaultThreadCurrentUICulture = new CultureInfo("en-US");
         }
     }
     internal static class DpiHelper {

@@ -40,6 +40,21 @@ namespace BlitzLauncher {
             public uint dwThreadId;
         }
 
+        [DllImport("user32.dll", SetLastError = true)]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        public static extern bool ShowWindow(IntPtr hWnd, uint nCmdShow);
+        public const uint SW_HIDE = 0;
+        public const uint SW_SHOW = 5;
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        private static extern IntPtr FindWindow(string lpClassName, string lpWindowName);
+        [DllImport("user32.dll", SetLastError = true, CharSet = CharSet.Auto)]
+        private static extern int SendMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+        private const uint WM_CLOSE = 0x0010;
+        private const uint SC_MINIMIZE = 0xF020;
+        private const uint WM_SYSCOMMAND = 0x0112;
+
         [DllImport("kernel32.dll", SetLastError = true, CharSet = CharSet.Unicode)]
         private static extern bool CreateProcess(
             string lpApplicationName,
@@ -58,16 +73,16 @@ namespace BlitzLauncher {
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern IntPtr OpenThread(uint dwDesiredAccess, bool bInheritHandle, uint dwThreadId);
         private static readonly uint THREAD_SUSPEND_RESUME = 2;
-        
+
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern int ResumeThread(IntPtr hThread);
-        
+
         [DllImport("kernel32.dll", SetLastError = true)]
         static extern int SuspendThread(IntPtr hThread);
 
         [DllImport("kernel32.dll", SetLastError = true)]
         private static extern bool CloseHandle(IntPtr hObject);
-        
+
         [DllImport("kernel32.dll", SetLastError = true)]
         internal static extern IntPtr OpenProcess(
             uint dwDesiredAccess,
@@ -97,7 +112,7 @@ namespace BlitzLauncher {
                         // ignore
                     }
                 }
-                
+
                 if (ThreadHandle == IntPtr.Zero) {
                     return;
                 }
@@ -126,7 +141,7 @@ namespace BlitzLauncher {
                         // ignore
                     }
                 }
-                
+
                 if (ThreadHandle == IntPtr.Zero) {
                     return;
                 }
@@ -205,8 +220,39 @@ namespace BlitzLauncher {
             return BusyWaitSuspendProcess();
         }
 
+        private static string WgcPath() {
+            string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
+                "Wargaming.net", "GameCenter", "wgc.exe");
+            return path;
+        }
+
         private static SuspendedProcess TryStartWargaming(Settings settings) {
             string path = "C:\\Games\\World_of_Tanks_Blitz\\wotblitz.exe";
+            string wgcPath = WgcPath();
+            bool wgcIsRunning = Process.GetProcessesByName("wgc").Length > 0;
+            if (wgcPath == null) {
+                MessageBox.Show($"Somehow the WGC app has not been found.. Error: {Marshal.GetLastWin32Error()}", "Error",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
+            if (!wgcIsRunning) {
+                Process.Start(wgcPath);
+                IntPtr hWnd = IntPtr.Zero;
+                Stopwatch timeout = Stopwatch.StartNew();
+                while (timeout.Elapsed.Seconds < 3) {
+                    hWnd = FindWindow(null, "Wargaming.net Game Center");
+                    if (hWnd != IntPtr.Zero) {
+                        break;
+                    }
+                    Thread.Sleep(5);
+                }
+
+                if (hWnd != IntPtr.Zero) {
+                    Thread.Sleep(2500);
+                    ShowWindow(hWnd, SW_HIDE);
+                }
+            }
+            
             if (!File.Exists(path)) {
                 return new SuspendedProcess(); // (not true) // (it very much means that the path doesn't exist (its false))
             }
@@ -228,7 +274,7 @@ namespace BlitzLauncher {
             if (!File.Exists(settings.LastExePath)) {
                 return new SuspendedProcess();
             }
-            
+
             return StartInSuspendedState(settings.LastExePath);
         }
         private static SuspendedProcess TryStartFromCustomExe(Settings settings) {
@@ -239,7 +285,7 @@ namespace BlitzLauncher {
             if (!File.Exists(settings.CustomExePath)) {
                 return new SuspendedProcess();
             }
-            
+
             return StartInSuspendedState(settings.CustomExePath);
         }
 
@@ -264,28 +310,28 @@ namespace BlitzLauncher {
             }
             return new SuspendedProcess();
         }
-        
+
         public static SuspendedProcess StartTonkGame(Settings settings) {
             SuspendedProcess opened = new SuspendedProcess();
             switch (settings.LaunchMode) {
                 case LaunchMode.Automatic: {
-                    opened = TryStartFromLastExe(settings);
-                    if (opened.IsOpen) return opened;
-                    
-                    opened = TryStartFromCustomExe(settings);
-                    if (opened.IsOpen) return opened;
+                        opened = TryStartFromLastExe(settings);
+                        if (opened.IsOpen) return opened;
 
-                    opened = TryStartWargaming(settings);
-                    if (opened.IsOpen) return opened;
+                        opened = TryStartFromCustomExe(settings);
+                        if (opened.IsOpen) return opened;
 
-                    opened = TryStartWithAppId(settings);
-                    if (opened.IsOpen) return opened;
+                        opened = TryStartWargaming(settings);
+                        if (opened.IsOpen) return opened;
 
-                    opened = TryStartUWP();
-                    if (opened.IsOpen) return opened;
+                        opened = TryStartWithAppId(settings);
+                        if (opened.IsOpen) return opened;
 
-                    return opened;   
-                }
+                        opened = TryStartUWP();
+                        if (opened.IsOpen) return opened;
+
+                        return opened;
+                    }
                 case LaunchMode.CustomPath:
                     return TryStartFromCustomExe(settings);
                 case LaunchMode.ForceSteam:
