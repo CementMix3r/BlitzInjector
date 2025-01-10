@@ -147,27 +147,8 @@ namespace BlitzLauncher {
             glowEf.Opacity = 1.0;
         }
 
-        private CancellationTokenSource stillRunningTokenCancellationSource = new CancellationTokenSource();
-        private Thread stillRunningThread = null;
-        private void CheckIfStillRunning() {
-            Process worldOfTonksProcess = Process.GetProcessesByName("wotblitz").FirstOrDefault();
-            if (worldOfTonksProcess == null || worldOfTonksProcess.HasExited) {
-                return;
-            }
-            var token = stillRunningTokenCancellationSource.Token;
-            while (!token.IsCancellationRequested) {
-                if (worldOfTonksProcess.WaitForExit(1)) { // hey process died so do something about it
-                    StatusText.Dispatcher.Invoke(new Action(() => {
-                        StatusText.Text = "Status: Not Injected!";
-                        StatusText.Foreground = new SolidColorBrush(Color.FromRgb(255, 0, 0));
-                    }));
-                    return;
-                }
-            }
-        }
-
         private int previousInjectPid = 0;
-        private async void InjectDll_Click(object sender, RoutedEventArgs e) {
+        private void InjectDll_Click(object sender, RoutedEventArgs e) {
             try {
 
                 if (previousInjectPid != 0 && Process.GetProcessById(previousInjectPid) != null) {
