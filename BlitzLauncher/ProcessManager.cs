@@ -6,6 +6,7 @@ using System.Windows;
 using System.Threading;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
+using System.Xml;
 
 
 namespace BlitzLauncher {
@@ -220,15 +221,43 @@ namespace BlitzLauncher {
             return BusyWaitSuspendProcess();
         }
 
-        private static string WgcPath() {
+        private static string GetWGCLaunchPath() {
+            const string xmlPath = "C:\\ProgramData\\Wargaming.net\\GameCenter\\preferences.xml";
+            if (!File.Exists(xmlPath)) {
+                MessageBox.Show($"The XML file: {xmlPath} wasnt found...", "Error", MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                throw new FileNotFoundException($"Could not find file: {xmlPath}");
+            }
+
+            XmlDocument xml = new XmlDocument();
+            xml.Load(xmlPath);
+
+            XmlNodeList gNodes = xml.SelectNodes("//games_manager/games/game");
+            if (gNodes == null || gNodes.Count == 0) {
+                MessageBox.Show("No game nodes found :(", "Error", MessageBoxButton.OK,
+                    MessageBoxImage.Error);
+                throw new InvalidOperationException("No game nodes found");
+            }
+
+            foreach (XmlNode gNode in gNodes) {
+                XmlNode path = gNode.SelectSingleNode("working_dir");
+                if (path != null && path.InnerText.Contains("World_of_Tanks_Blitz")) {
+                    return Path.Combine(path.InnerText.Trim(), "wotblitz.exe");
+                }
+            }
+
+            return "C:\\Games\\World_of_Tanks_Blitz\\wotblitz.exe";
+        }
+
+        private static string GetWGCExePath() {
             string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
                 "Wargaming.net", "GameCenter", "wgc.exe");
             return path;
         }
 
         private static SuspendedProcess TryStartWargaming(Settings settings) {
-            string path = "C:\\Games\\World_of_Tanks_Blitz\\wotblitz.exe";
-            string wgcPath = WgcPath();
+            string path = GetWGCLaunchPath();
+            string wgcPath = GetWGCExePath();
             bool wgcIsRunning = Process.GetProcessesByName("wgc").Length > 0;
             if (wgcPath == null) {
                 MessageBox.Show($"Somehow the WGC app has not been found.. Error: {Marshal.GetLastWin32Error()}", "Error",
@@ -252,9 +281,9 @@ namespace BlitzLauncher {
                     ShowWindow(hWnd, SW_HIDE);
                 }
             }
-            
+
             if (!File.Exists(path)) {
-                return new SuspendedProcess(); // (not true) // (it very much means that the path doesn't exist (its false))
+                return new SuspendedProcess();
             }
             settings.LastExePath = path;
             return TryStartFromLastExe(settings);
