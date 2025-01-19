@@ -221,11 +221,32 @@ namespace BlitzLauncher {
             return BusyWaitSuspendProcess();
         }
 
+        private static string GetWGCPathFromShortcut() {
+            try {
+                string smPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.StartMenu), "Programs",
+                    "Wargaming.net", "Wargaming.net Game Center.lnk");
+
+                if (!File.Exists(smPath)) return GetDefaultWGCExePath();
+                string target = ShortcutHelper.GetShortcutTarget(smPath);
+                if (!string.IsNullOrEmpty(smPath)) {
+                    return target;
+                }
+            } catch (Exception ex) {
+                MessageBox.Show($"Could not locate WGC executable: {ex.Message} - {Marshal.GetLastWin32Error()}",
+                    "WGC Path Error", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
+            return GetDefaultWGCExePath();
+        }
+
         private static string GetWGCLaunchPath() {
-            const string xmlPath = "C:\\ProgramData\\Wargaming.net\\GameCenter\\preferences.xml";
-            if (!File.Exists(xmlPath)) {
-                MessageBox.Show($"The XML file: {xmlPath} wasnt found...", "Error", MessageBoxButton.OK,
+            string target = GetWGCPathFromShortcut(); 
+            DirectoryInfo parentPath = Directory.GetParent(target);
+            string xmlPath = Path.Combine(parentPath.FullName, "preferences.xml");
+            if (string.IsNullOrEmpty(xmlPath)) {
+                MessageBox.Show($"The XML file: {xmlPath} wasnt found... Trying shortcut resolver..", "Error", MessageBoxButton.OK,
                     MessageBoxImage.Error);
+
                 throw new FileNotFoundException($"Could not find file: {xmlPath}");
             }
 
@@ -249,7 +270,7 @@ namespace BlitzLauncher {
             return "C:\\Games\\World_of_Tanks_Blitz\\wotblitz.exe";
         }
 
-        private static string GetWGCExePath() {
+        private static string GetDefaultWGCExePath() {
             string path = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData),
                 "Wargaming.net", "GameCenter", "wgc.exe");
             return path;
@@ -257,7 +278,7 @@ namespace BlitzLauncher {
 
         private static SuspendedProcess TryStartWargaming(Settings settings) {
             string path = GetWGCLaunchPath();
-            string wgcPath = GetWGCExePath();
+            string wgcPath = GetWGCPathFromShortcut();
             bool wgcIsRunning = Process.GetProcessesByName("wgc").Length > 0;
             if (wgcPath == null) {
                 MessageBox.Show($"Somehow the WGC app has not been found.. Error: {Marshal.GetLastWin32Error()}", "Error",
